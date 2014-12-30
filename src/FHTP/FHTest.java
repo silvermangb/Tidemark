@@ -41,50 +41,22 @@ public class FHTest {
 			//...initial number of buckets is 2. 4 pairs
 			//...are entered, so, there will be collisions.
 			//...
-			FastHashtable ft = new FastHashtable(2,10);
+			FastHashtable ft = new FastHashtable(1<<2);
 			for(int i=0;i<4;++i) {
 				ft.put(i, i);
 			}
+			long[] r = new long[2];
 			for(int i=0;i<4;++i) {
-				long j = ft.get(i);
-				assert j==(long)i;
+				boolean j = ft.get(i,r);
+				assert j;
+				assert r[0] == 1;
+				assert (long)i==r[1];
 			}
 			
 			return true;
 		}
 	}
-	
-	/*
-	 * Tests that a rehash is done when the
-	 * ratio of entries to buckets exceeds the
-	 * threshold.
-	 * This test causes 2 rehash's.
-	 */
-	public class TestRehash extends TestAbstract {
-		public boolean run() {
-			/*
-			 * initial number of buckets is 10 and
-			 * load factor is five. there will be
-			 * a rehash when there are 51 entries, and,
-			 * 101 entries.
-			 */
-			final int N=10;
-			final int M=11;
-			FastHashtable ft = new FastHashtable(N,5f);
-			for(int i=0;i<M*N;++i) {
-				ft.put(i, i);
-			}
-			/*
-			 * verify that all entries can be retrieved.
-			 */
-			for(int i=0;i<M*N;++i) {
-				long j = ft.get(i);
-				assert j==(long)i;
-			}
-			
-			return true;
-		}
-	}
+
 	
 	/*
 	 * Test where the key does not exist in the container.
@@ -107,12 +79,31 @@ public class FHTest {
 			/*
 			 * try to remove a key that does not exist.
 			 */
-			r = !ft.remove(1);
 			assert r;
-			return r;
+
+			ft = new FastHashtable(1 << 16);
+			for (int i = 0; i < (1 << 16); i += 2) {
+				ft.put(i, i);
+			}
+			long[] res = new long[2];
+			for (int i = 1; i < (1 << 16); i += 2) {
+				boolean b = ft.get(i, res);
+				assert !b;
+				assert res[0] == 0;
+				assert res[1] == 0;
+
+			}
+			for (int i = 0; i < (1 << 16); i += 2) {
+				boolean b = ft.get(i, res);
+				assert b;
+				assert res[0] == 1;
+				assert res[1] == i;
+
+			}
+
+			return true;
 		}
 	}
-	
 	/*
 	 * Returns the list of unit tests to run. Add new tests here.
 	 */
@@ -120,7 +111,6 @@ public class FHTest {
 		
 		ArrayList<TestAbstract> tests = new ArrayList<TestAbstract>();
 		
-		tests.add(new TestRehash());
 		tests.add(new TestPut());
 		tests.add(new TestCollision());
 		tests.add(new TestForMissingKey());
