@@ -16,42 +16,36 @@ package fastHashtable;
  * Note: if long was used for the array each bucket would be a bit array of size 64.
  */
 public class FastHashtable {
-	
 
 	/*
-	 * The size of the bucket array. Each
-	 * int in the array is a bit array.
-	 * The bucket index and the bit number maps
-	 * to a value in _values. If the bit is 1
-	 * there is an entry in _values, otherwise,
-	 * there is none.
+	 * The size of the bucket array. Each int in the array is a bit array. The
+	 * bucket index and the bit number maps to a value in _values. If the bit is
+	 * 1 there is an entry in _values, otherwise, there is none.
 	 */
-	private int _BUCKET_COUNT=2048;
+	private int _BUCKET_COUNT = 2048;
+	
 	/*
 	 * The number of key/value pairs in the hash table.
 	 */
 	private int _size;
-	
+
 	private int[] _buckets;
 	private long[][] _values;
-	
-    private final int _bit_vector_size = Integer.SIZE;
+
+	private final int _bit_vector_size = Integer.SIZE;
 
 	private void _init() {
 		this._buckets = new int[this._BUCKET_COUNT];
 		this._values = new long[this._BUCKET_COUNT][_bit_vector_size];
 	}
 
-
 	/*
 	 * default constructor.
-	 * 
 	 */
 	public FastHashtable() {
 		this._init();
 	}
 
-	
 	/*
 	 * specify the capacity of the object.
 	 * 
@@ -59,66 +53,65 @@ public class FastHashtable {
 	 * will always round up to a multiple of _bit_vector_size.
 	 */
 	public FastHashtable(int p_max_entries) {
-		this._BUCKET_COUNT = (int)java.lang.Math.ceil(0.5+p_max_entries/(float)_bit_vector_size);
+		this._BUCKET_COUNT = 
+			(int) java.lang.Math.ceil(0.5 + p_max_entries / (float) _bit_vector_size);
 		this._init();
 	}
 
-
+	/*
+	 * The number of key/value pairs in the hash table.
+	 */
 	public int size() {
 		return this._size;
 	}
 
 	/*
-	 * key k must satisfy 0<=k<=maxKey() 
-	 * to be a valid key.
+	 * key k must satisfy 0<=k<=maxKey() to be a valid key.
 	 */
 	public int maxKey() {
-		return this._BUCKET_COUNT*_bit_vector_size-1;
+		return this._BUCKET_COUNT * _bit_vector_size - 1;
 	}
-	
+
 	/*
 	 * this method will throw for p_key<0 or p_key>this.maxKey()
 	 */
 	public void put(int p_key, long p_value) {
 		int i = p_key % this._BUCKET_COUNT;
-		int k = (p_key-i)/this._BUCKET_COUNT;
+		int k = (p_key - i) / this._BUCKET_COUNT;
 
-		if((this._buckets[i]&(1<<k))==0) {
+		if ((this._buckets[i] & (1 << k)) == 0) {
 			this._size++;
 		}
 		this._buckets[i] |= (1 << k);
 		this._values[i][k] = p_value;
 	}
 
-	
 	/*
-	 * this method will not throw with an invalid key.
-	 * it's always ok to ask.
+	 * this method will not throw with an invalid key. it's always ok to ask.
 	 */
 	public boolean containsKey(int p_key) {
-		if(p_key<0) {
+		if (p_key < 0) {
 			return false;
 		}
 		int i = p_key % this._BUCKET_COUNT;
-		int k = (p_key-i)/this._BUCKET_COUNT;
-		if((this._buckets[i]&((1<<k)))!=0) {
+		int k = (p_key - i) / this._BUCKET_COUNT;
+		if ((this._buckets[i] & ((1 << k))) != 0) {
 			return true;
 		} else {
 			return false;
 		}
 	}
-	
+
 	/*
-	 * this method will not throw with an invalid key.
-	 * it's always ok to ask.
+	 * this method will not throw with an invalid key. it's always ok to ask.
 	 */
-	public boolean get(int p_key,long[] p_result) {
-		if(p_key<0) {
+	public boolean get(int p_key, long[] p_result) {
+		if (p_key < 0) {
 			return false;
 		}
 		int i = p_key % this._BUCKET_COUNT;
-		int k = (p_key-i)/this._BUCKET_COUNT;
-		if((this._buckets[i]&((1<<k)))!=0) {
+		int k = (p_key - i) / this._BUCKET_COUNT;
+		if ((this._buckets[i] & ((1 << k))) != 0) {
 			p_result[0] = 1;
 			p_result[1] = this._values[i][k];
 			return true;
@@ -126,35 +119,34 @@ public class FastHashtable {
 			return false;
 		}
 	}
-	
+
 	/*
-	 * this method could be faster if inline code were used
-	 * instead of the FastHashtable.get method.
+	 * this method could be faster if inline code were used instead of the
+	 * FastHashtable.get method.
 	 */
 	public String toString() {
 		int[] bitmasks = new int[_bit_vector_size];
-		for(int i=0;i<32;++i) {
-			bitmasks[i] = 1<<i;
+		for (int i = 0; i < 32; ++i) {
+			bitmasks[i] = 1 << i;
 		}
 		long[] r = new long[2];
 		StringBuilder sb = new StringBuilder();
 		sb.append('(');
-		for(int i=0;i<this._bit_vector_size;++i) {
-			for(int j=0;j<this._BUCKET_COUNT;++j) {
-				if((this._buckets[j]&(1<<i))!=0) {
-					int key = i*this._buckets.length+j;
-					this.get(key,r);
+		for (int i = 0; i < this._bit_vector_size; ++i) {
+			for (int j = 0; j < this._BUCKET_COUNT; ++j) {
+				if ((this._buckets[j] & (1 << i)) != 0) {
+					int key = i * this._buckets.length + j;
+					this.get(key, r);
 					sb.append('(');
 					sb.append(key);
 					sb.append(',');
 					sb.append(r[1]);
-					sb.append(')');	
+					sb.append(')');
 				}
 			}
 		}
 		sb.append(')');
 		return sb.toString();
 	}
-
 
 }

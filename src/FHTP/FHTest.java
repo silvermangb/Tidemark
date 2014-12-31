@@ -8,8 +8,6 @@ package FHTP;
 import fastHashtable.FastHashtable;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Hashtable;
 
 public class FHTest {
 
@@ -19,7 +17,7 @@ public class FHTest {
 	private abstract class TestAbstract {
 		public abstract boolean run();
 	}
-	
+
 	/*
 	 * Test put & containsKey
 	 */
@@ -30,7 +28,7 @@ public class FHTest {
 			return ft.containsKey(0);
 		}
 	}
-	
+
 	/*
 	 * Test put & containsKey
 	 */
@@ -40,41 +38,41 @@ public class FHTest {
 			try {
 				ft.put(-1, -1);
 				assert false;
-			} catch(java.lang.ArrayIndexOutOfBoundsException e) {
-				
+			} catch (java.lang.ArrayIndexOutOfBoundsException e) {
+
 			}
-			boolean b = ft.containsKey(ft.maxKey()+1);
+			boolean b = ft.containsKey(ft.maxKey() + 1);
 			assert !b;
 			b = ft.containsKey(-1);
 			assert !b;
 			ft.put(ft.maxKey(), 1);
 			assert ft.containsKey(ft.maxKey());
-			
+
 			long[] r = new long[2];
 
 			assert !ft.get(-1, r);
-			assert r[0]==0;
-			
-			assert !ft.get(ft.maxKey()+1, r);
-			assert r[0]==0;
-			
+			assert r[0] == 0;
+
+			assert !ft.get(ft.maxKey() + 1, r);
+			assert r[0] == 0;
+
 			return true;
 		}
 	}
-	
+
 	public class TestToString extends TestAbstract {
 		/*
-		 * construct a string representation
-		 * in parallel with populating the hash table.
+		 * construct a string representation in parallel with populating the
+		 * hash table.
 		 */
 		public boolean run() {
-			
+
 			FastHashtable ft = new FastHashtable();
-			
+
 			StringBuilder sb = new StringBuilder();
-			
+
 			sb.append('(');
-			for(int i=0;i<16;i+=2) {
+			for (int i = 0; i < 16; i += 2) {
 				ft.put(i, i);
 				sb.append('(');
 				sb.append(i);
@@ -86,43 +84,42 @@ public class FHTest {
 
 			String a = sb.toString();
 			String b = ft.toString();
-			
+
 			assert a.equals(b);
 			return true;
 		}
 	}
-	
+
 	/*
-	 * Test for collision. Collisions occur given
-	 * the initial capacity and the number of key/value pairs.
+	 * Test for collision. Collisions occur given the initial capacity and the
+	 * number of key/value pairs.
 	 */
 	public class TestCollision extends TestAbstract {
 		public boolean run() {
-			//...
-			//...the FastHashtable will always have a
-			//...minimum capacity of FastHashtable._bit_vector_size.
-			//...by passing 0 as the max size the FastHashtable
-			//...will have one bucket and each put after
-			//...the first will cause a collision
-			//...
+			// ...
+			// ...the FastHashtable will always have a
+			// ...minimum capacity of FastHashtable._bit_vector_size.
+			// ...by passing 0 as the max size the FastHashtable
+			// ...will have one bucket and each put after
+			// ...the first will cause a collision
+			// ...
 			FastHashtable ft = new FastHashtable(0);
 			final int N = ft.maxKey();
-			for(int i=0;i<N;++i) {
+			for (int i = 0; i < N; ++i) {
 				ft.put(i, i);
 			}
 			long[] r = new long[2];
-			for(int i=0;i<N;++i) {
-				boolean j = ft.get(i,r);
+			for (int i = 0; i < N; ++i) {
+				boolean j = ft.get(i, r);
 				assert j;
 				assert r[0] == 1;
-				assert (long)i==r[1];
+				assert (long) i == r[1];
 			}
-			
+
 			return true;
 		}
 	}
 
-	
 	/*
 	 * Test where the key does not exist in the container.
 	 */
@@ -169,34 +166,34 @@ public class FHTest {
 			return true;
 		}
 	}
+
 	/*
 	 * Returns the list of unit tests to run. Add new tests here.
 	 */
 	public ArrayList<TestAbstract> getTestsList() {
-		
+
 		ArrayList<TestAbstract> tests = new ArrayList<TestAbstract>();
-		
+
 		tests.add(new TestPut());
 		tests.add(new TestCollision());
 		tests.add(new TestForMissingKey());
 		tests.add(new TestInvalidKey());
 		tests.add(new TestToString());
-		
+
 		return tests;
-		
+
 	}
-	
+
 	public static void main(String[] args) {
 
 		/*
-		 * iterate over all of the unit tests and
-		 * count the number of failures, then, report
-		 * the result.
+		 * iterate over all of the unit tests and count the number of failures,
+		 * then, report the result.
 		 */
 		int failure_count = 0;
 		FHTest test = new FHTest();
 		ArrayList<TestAbstract> tests = test.getTestsList();
-		
+
 		TestAbstract ti = null;
 
 		for (int i = 0; i < tests.size(); ++i) {
@@ -210,7 +207,8 @@ public class FHTest {
 
 			}
 		}
-		System.out.println("failure count: "+failure_count+" of "+tests.size()+" unit tests");
+		System.out.println("failure count: " + failure_count + " of "
+				+ tests.size() + " unit tests");
 
 	}
 
