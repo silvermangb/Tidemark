@@ -39,6 +39,32 @@ public class FastHashtable {
 		this._values = new long[this._BUCKET_COUNT][_bit_vector_size];
 	}
 
+	private void _rehash() {
+		FastHashtable ft = new FastHashtable(2*(this.maxSize()));
+		int[] bitmasks = new int[_bit_vector_size];
+		for (int i = 0; i < 32; ++i) {
+			bitmasks[i] = 1 << i;
+		}
+		long[] r = new long[2];
+		for (int i = 0; i < this._bit_vector_size; ++i) {
+			for (int j = 0; j < this._BUCKET_COUNT; ++j) {
+				if ((this._buckets[j] & (1 << i)) != 0) {
+					int key = i * this._buckets.length + j;
+					this.get(key, r);
+					ft.put(key, r[1]);
+				}
+			}
+		}
+		
+		this._BUCKET_COUNT	= ft._BUCKET_COUNT;
+		this._buckets		= ft._buckets;
+		this._values		= ft._values;
+		this._size			= ft._size;
+		
+		ft._buckets = null;
+		ft._values  = null;
+		
+	}
 	/*
 	 * default constructor.
 	 */
@@ -54,7 +80,10 @@ public class FastHashtable {
 	 */
 	public FastHashtable(int p_max_entries) {
 		this._BUCKET_COUNT = 
-			(int) java.lang.Math.ceil(0.5 + p_max_entries / (float) _bit_vector_size);
+			(int) java.lang.Math.floor(p_max_entries / (float) _bit_vector_size);
+		if((this._BUCKET_COUNT*this._bit_vector_size)<p_max_entries) {
+			this._BUCKET_COUNT+=1;
+		}
 		this._init();
 	}
 
@@ -72,10 +101,17 @@ public class FastHashtable {
 		return this._BUCKET_COUNT * _bit_vector_size - 1;
 	}
 
+	public int maxSize() {
+		return this._BUCKET_COUNT * _bit_vector_size;
+	}
+	
 	/*
 	 * this method will throw for p_key<0 or p_key>this.maxKey()
 	 */
 	public void put(int p_key, long p_value) {
+		if(p_key>this.maxKey()) {
+			this._rehash();
+		}
 		int i = p_key % this._BUCKET_COUNT;
 		int k = (p_key - i) / this._BUCKET_COUNT;
 

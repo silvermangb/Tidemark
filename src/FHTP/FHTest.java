@@ -30,6 +30,39 @@ public class FHTest {
 	}
 
 	/*
+	 * Test growing the table.
+	 */
+	public class TestGrow extends TestAbstract {
+		public boolean run() {
+			FastHashtable ft = new FastHashtable();
+			//...
+			//...ft.maxSize()>ft.maxKey(), so
+			//...the table must grow.
+			//...
+			int k = ft.maxSize();
+			ft.put(k, k);
+			ft.put(k+1, k+1);
+			assert ft.containsKey(k);
+			assert ft.containsKey(k+1);
+			long[] r = new long[2];
+			ft.get(k, r);
+			assert r[0]==1;
+			assert r[1]==k;
+			//...
+			//...test that the table grew by a
+			//...factor of 2.
+			//...
+			assert ft.maxSize()==2*k;
+			//...
+			//...the max key is one less
+			//...then the max size.
+			//..
+			assert ft.maxKey()==2*k-1;
+			return true;
+		}
+	}
+
+	/*
 	 * Test put & containsKey
 	 */
 	public class TestInvalidKey extends TestAbstract {
@@ -174,6 +207,7 @@ public class FHTest {
 
 		ArrayList<TestAbstract> tests = new ArrayList<TestAbstract>();
 
+		tests.add(new TestGrow());
 		tests.add(new TestPut());
 		tests.add(new TestCollision());
 		tests.add(new TestForMissingKey());
