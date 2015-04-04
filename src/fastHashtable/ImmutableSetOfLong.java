@@ -1,6 +1,7 @@
 package fastHashtable;
 
 import java.lang.Math;
+import java.util.Arrays;
 
 /**
  * Objects of this class hold a fixed set of values and are optimized to provide one set operation,
@@ -102,7 +103,13 @@ public class ImmutableSetOfLong {
 	
 	public long getMemoryUsage() {
 		
-		return Integer.SIZE*this._bucketSize.length + Long.SIZE*this._bucketSize.length*_MAX_BUCKET_LENGTH;
+		int n = this._bucketSize.length;
+		int total = Integer.SIZE*n;
+		for(int i=0;i<this._bucketSize.length;++i) {
+			n = this._table[i].length;
+			total += Long.SIZE*n;
+		}
+		return total;
 		
 	}
 
@@ -224,6 +231,14 @@ public class ImmutableSetOfLong {
 			}
 		}
 		
+		for(int i=0;i<optimized._table.length;++i) {
+			if (optimized._table[i]!=null) {
+				long[] trimmedBucket = Arrays.copyOf(optimized._table[i],
+						optimized._bucketSize[i]);
+				optimized._table[i] = trimmedBucket;
+			}
+		}
+		
 		this._bucketSize = optimized._bucketSize;
 		this._table = optimized._table;
 	}
@@ -240,6 +255,7 @@ public class ImmutableSetOfLong {
         return d;
 		
 	}
+	
 	private long lookups = 0;
 	private long lookupCollisions = 0;
 	

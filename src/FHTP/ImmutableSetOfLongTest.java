@@ -77,7 +77,10 @@ public class ImmutableSetOfLongTest {
 	public class TestCollision extends TestAbstract {
 		public boolean run() {
 
-			final int N = (1<<22)+(int)(System.currentTimeMillis()%1024);
+			double delta;
+			long now;
+			long then;
+			final int N = (1<<22)+(int)((System.currentTimeMillis()%1024)-512);
 			
 			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 			
@@ -89,22 +92,31 @@ public class ImmutableSetOfLongTest {
 				l = rand.nextLong();
 				l &= Long.MAX_VALUE;
 				assert l>=0;
-				includedValues[i] = l;
-				isol.add(l);
-				
+				includedValues[i] = l;				
 			}
+			
+			then = System.currentTimeMillis();
+			isol.add(includedValues);
+			now = System.currentTimeMillis();
+			delta = (now-then)/10000.0;
+			System.out.println(delta);
+			
 
 			isol.finalize();
 			long n = isol.getMemoryUsage();
 			long d = Long.SIZE*N;
 			System.out.println(this.getClass().getName()+": "+n+" "+d+" "+((double)n/d));
+			then = System.currentTimeMillis();
 			for (int i = 1; i < N; ++i) {
 
 				
 				assert isol.contains(includedValues[i]);
 				assert !isol.contains(rand.nextLong()&Long.MAX_VALUE);
 			}
-			
+			now = System.currentTimeMillis();
+			delta = (now-then)/1000.0;
+			System.out.println(delta);
+
 			System.out.println("lookupStatistics: "+isol.getLookupStatistics());
 
 			return true;
