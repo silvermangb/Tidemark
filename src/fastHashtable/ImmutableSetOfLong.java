@@ -22,6 +22,7 @@ public class ImmutableSetOfLong {
 	 */
 	private final int _DEFAULT_BUCKET_COUNT = 2048+1;
 	private int _MAX_BUCKET_LENGTH = 6;
+	private int _finalizedBucketCount;
 	
 	private boolean isFinalized = false;
 	
@@ -181,7 +182,7 @@ public class ImmutableSetOfLong {
 
 		int hash = hashFunction(l);
 
-		if (hash >= this._table.length) {
+		if (hash >= _finalizedBucketCount) {
 			return false;
 		}
 
@@ -202,6 +203,38 @@ public class ImmutableSetOfLong {
 
 	}
 	
+	public void dump(String banner) {
+		System.out.println("dump: "+banner);
+		if (false) {
+			if (!isFinalized) {
+				throw new IllegalStateException("not finalized");
+			}
+		}
+		assert this._table.length==this._bucketSize.length : "table and buckeSize not of same length" ;
+		for (int i = 0; i < this._table.length; ++i) {
+			if (this._table[i] != null) {
+				System.out.print("row " + i + ": ");
+				for (int j = 0; j < this._table[i].length; ++j) {
+					System.out.print(this._table[i][j] + ", ");
+				}
+				System.out.println();
+			}
+		}
+		System.out.flush();
+	}
+	
+	private void getValues(ImmutableSetOfLong s,long[] a) {
+		int index = 0;
+		for(int i=0;i<s._table.length;++i) {
+			if(s._table[i]!=null) {
+				for(int j=0;j<s._bucketSize[i];++j) {
+					a[index++] = s._table[i][j];
+				}
+			}
+		}
+		Arrays.sort(a);
+	}
+	
 	public void finalize() {
 		
 		this.isFinalized = true;
@@ -219,12 +252,12 @@ public class ImmutableSetOfLong {
 			++ilog2;
 		}
 		optimized._MAX_BUCKET_LENGTH = Math.max(ilog2, 10);
-		final int bucketCount = Math.max((this._size+1)/optimized._MAX_BUCKET_LENGTH,optimized._MAX_BUCKET_LENGTH);
-		optimized._table = new long[bucketCount][];
-		for(int i=0;i<bucketCount;++i) {
+		_finalizedBucketCount = Math.max((this._size+1)/optimized._MAX_BUCKET_LENGTH,optimized._MAX_BUCKET_LENGTH);
+		optimized._table = new long[_finalizedBucketCount][];
+		for(int i=0;i<_finalizedBucketCount;++i) {
 			optimized._table[i] = new long[optimized._MAX_BUCKET_LENGTH];
 		}
-		optimized._bucketSize = new int[bucketCount];
+		optimized._bucketSize = new int[_finalizedBucketCount];
 		for(int i=0;i<this._table.length;++i) {
 			if(this._table[i]!=null) {
 					optimized.add(this._table[i],this._bucketSize[i]);
@@ -241,6 +274,7 @@ public class ImmutableSetOfLong {
 		
 		this._bucketSize = optimized._bucketSize;
 		this._table = optimized._table;
+		this._finalizedBucketCount = this._table.length;
 	}
 
 
@@ -261,5 +295,9 @@ public class ImmutableSetOfLong {
 	
 	public double getLookupStatistics() {
 		return (double)lookupCollisions/lookups;
+	}
+	
+	public long getLookupCollisonCount() {
+		return this.lookupCollisions;
 	}
 }

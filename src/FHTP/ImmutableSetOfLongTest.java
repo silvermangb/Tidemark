@@ -107,17 +107,16 @@ public class ImmutableSetOfLongTest {
 			long d = Long.SIZE*N;
 			System.out.println(this.getClass().getName()+": "+n+" "+d+" "+((double)n/d));
 			then = System.currentTimeMillis();
-			for (int i = 1; i < N; ++i) {
-
-				
+			for (int i = 1; i < N; ++i) {		
 				assert isol.contains(includedValues[i]);
-				assert !isol.contains(rand.nextLong()&Long.MAX_VALUE);
+				assert !isol.contains(rand.nextLong() & Long.MAX_VALUE);
+				
 			}
 			now = System.currentTimeMillis();
 			delta = (now-then)/1000.0;
 			System.out.println(delta);
 
-			System.out.println("lookupStatistics: "+isol.getLookupStatistics());
+			System.out.println("lookupStatistics: "+isol.getLookupStatistics()+", "+isol.getLookupCollisonCount());
 
 			return true;
 		}
@@ -129,18 +128,28 @@ public class ImmutableSetOfLongTest {
 	public class TestForMissingKey extends TestAbstract {
 		public boolean run() {
 			
+			long N = 16;
 			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 
-			isol = new ImmutableSetOfLong(1 << 16);
-			for (long i = 0; i < (1 << 16); i += 2) {
+			isol = new ImmutableSetOfLong();
+			for (long i = 0; i < (1 << N); i += 2) {
 				isol.add(i);
 			}
+			//isol.dump("before");
 			isol.finalize();
-			for (long i = 1; i < (1 << 16); i += 2) {
-				assert !isol.contains(i);
+			//isol.dump("after");
+			System.out.flush();
+			for (long i = 1; i < (1 << N); i += 2) {
+				if(isol.contains(i)) {
+					throw new RuntimeException(i+" not in set");
+				}
+				assert !isol.contains(i) : i+" not in set";
 			}
-			for (long i = 0; i < (1 << 16); i += 2) {
-				assert isol.contains(i);
+			for (long i = 0; i < (1 << N); i += 2) {
+				if(!isol.contains(i)) {
+					throw new RuntimeException(i+" not in set");
+				}				
+				assert isol.contains(i) : i+" in set";
 			}
 
 			return true;
