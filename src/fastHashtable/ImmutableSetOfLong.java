@@ -19,7 +19,7 @@ public class ImmutableSetOfLong {
 	 * bucket index and the bit number maps to a value in _values. If the bit is
 	 * 1 there is an entry in _values, otherwise, there is none.
 	 */
-	private final int _DEFAULT_BUCKET_COUNT = 2048;
+	private final int _DEFAULT_BUCKET_COUNT = 2048+1;
 	private int _MAX_BUCKET_LENGTH = 6;
 	
 	private boolean isFinalized = false;
@@ -40,19 +40,26 @@ public class ImmutableSetOfLong {
 	private void _rehash() {
 
 
-		ImmutableSetOfLong ft = new ImmutableSetOfLong(2*this._bucketSize.length*_MAX_BUCKET_LENGTH);
+		ImmutableSetOfLong isol = new ImmutableSetOfLong(false);
+		isol._MAX_BUCKET_LENGTH = 2*this._MAX_BUCKET_LENGTH;
+		final int bucketCount = 2*this._table.length+1;
+		isol._table = new long[bucketCount][];
+		for(int i=0;i<bucketCount;++i) {
+			isol._table[i] = new long[isol._MAX_BUCKET_LENGTH];
+		}
+		isol._bucketSize = new int[bucketCount];
 		
-		for(long[] bucket : _table) {
-			if (bucket!=null) {
-				for (long l : bucket) {
-					ft.add(l);
-				}
+		for(int i=0;i<this._table.length;++i) {
+			if(this._bucketSize[i]>0) {
+				isol.add(this._table[i],this._bucketSize[i]);
 			}
 		}
+	
 
-		this._table 		= ft._table;
-		this._bucketSize    = ft._bucketSize;
-		this._size			= ft._size;
+		this._MAX_BUCKET_LENGTH = isol._MAX_BUCKET_LENGTH;
+		this._table 		= isol._table;
+		this._bucketSize    = isol._bucketSize;
+		this._size			= isol._size;
 
 		
 	}
@@ -204,8 +211,8 @@ public class ImmutableSetOfLong {
 		if(dlog2>ilog2) {
 			++ilog2;
 		}
-		optimized._MAX_BUCKET_LENGTH = ilog2;
-		final int bucketCount = (this._size+1)/optimized._MAX_BUCKET_LENGTH;
+		optimized._MAX_BUCKET_LENGTH = Math.max(ilog2, 10);
+		final int bucketCount = Math.max((this._size+1)/optimized._MAX_BUCKET_LENGTH,optimized._MAX_BUCKET_LENGTH);
 		optimized._table = new long[bucketCount][];
 		for(int i=0;i<bucketCount;++i) {
 			optimized._table[i] = new long[optimized._MAX_BUCKET_LENGTH];
@@ -224,9 +231,10 @@ public class ImmutableSetOfLong {
 
 	private int hashFunction(long l) {
 		
+        int c = this._table.length;
+        int e = this._bucketSize.length;
         int a = 3 * (((int) l) ^ (int) (l >>> 32));
         int b = a & POS_BITS;
-        int c = this._table.length;
         int d = b % c;
         
         return d;

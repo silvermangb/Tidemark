@@ -6,7 +6,7 @@
 package FHTP;
 
 
-import fastHashtable.Hashtable;
+import fastHashtable.ImmutableSetOfLong;
 
 
 import java.util.ArrayList;
@@ -21,14 +21,15 @@ public class ImmutableSetOfLongTest {
 	}
 
 	/*
-	 * Test put & containsKey
+	 * Test add & contains
 	 */
 	public class TestPut extends TestAbstract {
 		public boolean run() {
-			Hashtable ht = new Hashtable();
+			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 			long l = (long)Integer.MAX_VALUE + 1;
-			ht.put(l);
-			return ht.containsKey(l);
+			isol.add(l);
+			isol.finalize();
+			return isol.contains(l);
 		}
 	}
 
@@ -37,13 +38,16 @@ public class ImmutableSetOfLongTest {
 	 */
 	public class TestGrow extends TestAbstract {
 		public boolean run() {
-			Hashtable ht = new Hashtable();
+			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 			
-			long k = ht.maxSize();
-			ht.put(k);
-			ht.put(k+1);
-			assert ht.containsKey(k);
-			assert ht.containsKey(k+1);
+			long k = (long)Integer.MAX_VALUE+1;
+			isol.add(k);
+			isol.add(k+1);
+			
+			isol.finalize();
+			
+			assert isol.contains(k);
+			assert isol.contains(k+1);
 
 
 			return true;
@@ -51,14 +55,15 @@ public class ImmutableSetOfLongTest {
 	}
 
 	/*
-	 * Test put & containsKey
+	 * Test add & contains
 	 */
 	public class TestInvalidKey extends TestAbstract {
 		public boolean run() {
-			Hashtable ht = new Hashtable();
+			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 
-			ht.put(-1);
-			assert !ht.containsKey(-1);
+			isol.add(-1);
+			isol.finalize();
+			assert !isol.contains(-1);
 
 			return true;
 		}
@@ -72,34 +77,35 @@ public class ImmutableSetOfLongTest {
 	public class TestCollision extends TestAbstract {
 		public boolean run() {
 
-			final int N = 1<<20;
+			final int N = (1<<22)+(int)(System.currentTimeMillis()%1024);
 			
-			Hashtable ht = new Hashtable(4*N);
+			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 			
-			java.util.Random rand = new java.util.Random();
+			java.util.Random rand = new java.util.Random(System.currentTimeMillis());
 
 			long[] includedValues = new long[N];
 			long l;
-			for(int i=0;i<N;++i) {
+			for(int i=1;i<N;++i) {
 				l = rand.nextLong();
 				l &= Long.MAX_VALUE;
 				assert l>=0;
 				includedValues[i] = l;
-				ht.put(l);
+				isol.add(l);
 				
 			}
 
-			long n = ht.getMemoryUsage();
+			isol.finalize();
+			long n = isol.getMemoryUsage();
 			long d = Long.SIZE*N;
 			System.out.println(this.getClass().getName()+": "+n+" "+d+" "+((double)n/d));
-			for (int i = 0; i < N; ++i) {
+			for (int i = 1; i < N; ++i) {
 
 				
-				assert ht.containsKey(includedValues[i]);
-				assert !ht.containsKey(rand.nextLong()&Long.MAX_VALUE);
+				assert isol.contains(includedValues[i]);
+				assert !isol.contains(rand.nextLong()&Long.MAX_VALUE);
 			}
 			
-			System.out.println("lookupStatistics: "+ht.getLookupStatistics());
+			System.out.println("lookupStatistics: "+isol.getLookupStatistics());
 
 			return true;
 		}
@@ -110,31 +116,19 @@ public class ImmutableSetOfLongTest {
 	 */
 	public class TestForMissingKey extends TestAbstract {
 		public boolean run() {
-			Hashtable ht = new Hashtable();
-			boolean r;
-			/*
-			 * the container is empty,
-			 */
-			r = !ht.containsKey(0);
-			assert r;
-			/*
-			 * the container has entries but for key equals 1.
-			 */
-			ht.put(0);
-			r = !ht.containsKey(1);
-			assert r;
+			
+			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 
-
-
-			ht = new Hashtable(1 << 16);
+			isol = new ImmutableSetOfLong(1 << 16);
 			for (long i = 0; i < (1 << 16); i += 2) {
-				ht.put(i);
+				isol.add(i);
 			}
+			isol.finalize();
 			for (long i = 1; i < (1 << 16); i += 2) {
-				assert !ht.containsKey(i);
+				assert !isol.contains(i);
 			}
 			for (long i = 0; i < (1 << 16); i += 2) {
-				assert ht.containsKey(i);
+				assert isol.contains(i);
 			}
 
 			return true;
