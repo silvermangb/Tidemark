@@ -33,7 +33,12 @@ public class ImmutableSetOfLongTest {
 
 			isol.finalizeSet();
 			assert !isol.contains(-1);
-
+			
+			isol = new ImmutableSetOfLong();
+			isol.add(new long[]{0});
+			isol.finalizeSet();
+			
+			assert !isol.contains(1);
 			return true;
 		}
 	}

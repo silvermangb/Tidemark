@@ -110,13 +110,13 @@ public class ImmutableSetOfLong {
 		if(ilog2<dlog2) {
 			++binarySearchWC;
 		}
-		int maxCollsionsGoal = binarySearchWC/this.binarySearchTarget;
+		int maxCollisionsGoal = binarySearchWC/this.binarySearchTarget;
 		int hashValue;
-		int goal = 4;
-		maxCollisions = maxCollsionsGoal+1;
+		maxCollisions = maxCollisionsGoal+1;
 		int[] h = null;
-		int M = HashUtil.nextPrime(2*this._size+1);
-		while(maxCollisions>goal && maxCollisions>1 && this._size>0 && (M/this._size)<5) {
+		int M = this._size;
+		do{
+			M = HashUtil.nextPrime(3*M/2);
 			int collisions = 0;
 			h = new int[M];
 			for(int j=0;j<this.data.size();++j) {
@@ -124,28 +124,13 @@ public class ImmutableSetOfLong {
 				for(int k=0;k<l.length;++k) {
 					hashValue = this.hashFunction(l[k], M);
 					++h[hashValue];
-					collisions = Math.max(collisions, h[hashValue]);
+					collisions = Math.max(collisions, h[hashValue]-1);
 				}
 			}
-			M = HashUtil.nextPrime(3*M/2);
 			maxCollisions = collisions;
 			
-		}
-		M = Math.min(M,h==null?1:h.length);
-		if(h==null) {
-			h = new int[M];
-			int collisions = 0;
-			h = new int[M];
-			for(int j=0;j<this.data.size();++j) {
-				long[] l = this.data.get(j);
-				for(int k=0;k<l.length;++k) {
-					hashValue = this.hashFunction(l[k], M);
-					++h[hashValue];
-					collisions = Math.max(collisions, h[hashValue]);
-				}
-			}
-			maxCollisions = collisions;
-		}
+		} while(maxCollisions>maxCollisionsGoal && maxCollisions>0 && this._size>0 && (M/this._size)<5);
+
 		System.out.println("maxCollisions="+maxCollisions);
 				
 		//...
