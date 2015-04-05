@@ -42,7 +42,7 @@ public class ImmutableSetOfLong {
 	}
 
 	
-	public double getMemoryUsage() {
+	public long getMemoryUsage() {
 		
 		long total = (long)Integer.SIZE*this._bucketCount;
 		for(int i=0;i<this._bucketCount;++i) {

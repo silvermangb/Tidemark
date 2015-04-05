@@ -65,7 +65,7 @@ public class ImmutableSetOfLongTest {
 			now = System.currentTimeMillis();
 			delta = (now-then)/10000.0;
 			System.out.println(this.getClass().getName()+":time to finalize:\t"+delta);System.out.flush();
-			double n = isol.getMemoryUsage();
+			long n = isol.getMemoryUsage();
 			long d = Long.SIZE*N;
 			System.out.println(this.getClass().getName()+":memory usage:\t"+n+" "+d+" "+(n/d));System.out.flush();
 			
