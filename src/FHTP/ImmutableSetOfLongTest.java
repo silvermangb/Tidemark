@@ -51,6 +51,9 @@ public class ImmutableSetOfLongTest {
 	 * Re-factored.
 	 */
 	public class TestCollision extends TestAbstract {
+		
+		public boolean b;
+		
 		public boolean _run(ImmutableSetOfLong isol,long[] includedValues,long[] excludedValues) {
 
 			final int N = includedValues.length;
@@ -65,7 +68,7 @@ public class ImmutableSetOfLongTest {
 			delta = (now-then)/10000.0;
 			System.out.println(this.getClass().getName()+":time to add data to set:\t"+delta);System.out.flush();
 			
-			then = now;//System.currentTimeMillis();
+			then = System.currentTimeMillis();
 			isol.finalizeSet();
 			now = System.currentTimeMillis();
 			delta = (now-then)/10000.0;
@@ -76,10 +79,12 @@ public class ImmutableSetOfLongTest {
 			
 			
 			for (int j = 0; j < 8; j++) {
-				then = now;//System.currentTimeMillis();
+				then = System.currentTimeMillis();
 				for (int i = 0; i < N; ++i) {
-					assert isol.contains(includedValues[i]) : "missing";
-					assert !isol.contains(excludedValues[i]) : "invalid";
+					b = isol.contains(includedValues[i]);
+					assert b : "missing";
+					b = isol.contains(excludedValues[i]);
+					assert !b : "invalid";
 				}
 				now = System.currentTimeMillis();
 				delta = (now - then) / 1000.0;
@@ -87,6 +92,7 @@ public class ImmutableSetOfLongTest {
 						+ ":time to test lookups:\t" + delta);
 				System.out.flush();
 			}
+			System.out.println(b);
 			System.out.println(this.getClass().getName()+":lookupStatistics:\t"+isol.getLookupStatistics());System.out.flush();
 			System.out.println(this.getClass().getName()+":maxCollisions:\t"+isol.getMaxCollisions());System.out.flush();
 
@@ -117,7 +123,6 @@ public class ImmutableSetOfLongTest {
 			}
 			includedValues[0] = 0;
 			includedValues[1] = 0;
-//			excludedValues[0] = 0;
 			now = System.currentTimeMillis();
 			delta = (now-then)/10000.0;
 			System.out.println(this.getClass().getName()+":time to generate data:\t"+delta);System.out.flush();
