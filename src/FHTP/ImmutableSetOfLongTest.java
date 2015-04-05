@@ -69,7 +69,6 @@ public class ImmutableSetOfLongTest {
 		
 			then = System.currentTimeMillis();
 			isol.add(includedValues);
-			isol.add(includedValues);
 			now = System.currentTimeMillis();
 			delta = (now-then)/10000.0;
 			System.out.println(this.getClass().getName()+":time to add data to set:\t"+delta);System.out.flush();

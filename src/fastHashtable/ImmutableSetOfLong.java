@@ -31,6 +31,8 @@ public class ImmutableSetOfLong {
 	private int[]    _buckets;
 	private long[][] _table;
 	private int       maxCollisions=0;
+	private int       growthFactor=3;
+	private int       binarySearchTarget=4;
 
 	/*
 	 * The number of entries pairs in the hash table.
@@ -71,8 +73,6 @@ public class ImmutableSetOfLong {
 			throw new IllegalStateException("the object has not been finalized");
 		}
 		
-		++lookups;
-
 		int hash = hashFunction(l,this._bucketCount);
 
 		long[] bucket = this._table[hash];
@@ -82,17 +82,11 @@ public class ImmutableSetOfLong {
 		}
 
 		
-		int collisions = 0;
 		for (int i = 0; i < this._buckets[hash]; ++i) {
 			if (bucket[i] == l) {
-				lookupCollisions += collisions;
-				maxCollisions = Math.max(maxCollisions, collisions);
 				return true;
 			};
-			++collisions;
-
-		}
-        ;
+		};
 		return false;
 
 	}
@@ -112,12 +106,11 @@ public class ImmutableSetOfLong {
 		if(ilog2<dlog2) {
 			++binarySearchWC;
 		}
-		int maxCollsionsGoal = binarySearchWC/4;
+		int maxCollsionsGoal = binarySearchWC/this.binarySearchTarget;
 		int hashValue;
-		final int L=3;
-		int[] h = new int[(1<<(L))*this._size+1];
+		int[] h = new int[(1<<(this.growthFactor))*this._size+1];
 		int M=0;
-		for(int i=0;i<L;++i) {
+		for(int i=0;i<this.growthFactor;++i) {
 			maxCollisions = 0;
 			M = (1<<(i+1))*this._size + 1;
 			for(int j=0;j<this.data.size();++j) {
@@ -193,5 +186,17 @@ public class ImmutableSetOfLong {
 	
 	public long getMaxCollisions() {
 		return maxCollisions;
+	}
+	
+	public int setGrowthFactor(int gf) {
+		int tmp = growthFactor;
+		growthFactor = gf;
+		return tmp;
+	}
+	
+	public int setBinarySearchTarget(int bst) {
+		int tmp = this.binarySearchTarget;
+		this.binarySearchTarget = bst;
+		return tmp;
 	}
 }
