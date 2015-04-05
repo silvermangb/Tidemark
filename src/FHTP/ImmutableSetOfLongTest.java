@@ -60,7 +60,7 @@ public class ImmutableSetOfLongTest {
 			delta = (now-then)/10000.0;
 			System.out.println(this.getClass().getName()+":time to add data to set:\t"+delta);System.out.flush();
 			
-			then = System.currentTimeMillis();
+			then = now;//System.currentTimeMillis();
 			isol.finalizeSet();
 			now = System.currentTimeMillis();
 			delta = (now-then)/10000.0;
@@ -71,7 +71,7 @@ public class ImmutableSetOfLongTest {
 			
 			
 			for (int j = 0; j < 8; j++) {
-				then = System.currentTimeMillis();
+				then = now;//System.currentTimeMillis();
 				for (int i = 0; i < N; ++i) {
 					assert isol.contains(includedValues[i]) : "missing";
 					assert !isol.contains(excludedValues[i]) : "invalid";
