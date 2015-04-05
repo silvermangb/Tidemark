@@ -142,6 +142,7 @@ public class ImmutableSetOfLong {
 		this._buckets = new int[this._bucketCount];
 		this._table = new long[M][];
 
+		boolean present = false;
 		for(int j=0;j<this.data.size();++j) {
 			long[] larray = this.data.get(j);
 			for(long l : larray) {
@@ -151,7 +152,16 @@ public class ImmutableSetOfLong {
 					h[hashValue] = 0;
 				}
 				long[] bucket = this._table[hashValue];
-				bucket[this._buckets[hashValue]++] = l;
+				present = false;
+				for(int i=0;i<this._buckets[hashValue];++i) {
+					if(this._table[hashValue][i]==l) {
+						present = true;
+						break;
+					}
+				}
+				if (!present) {
+					bucket[this._buckets[hashValue]++] = l;
+				}
 			}
 		}
 		
