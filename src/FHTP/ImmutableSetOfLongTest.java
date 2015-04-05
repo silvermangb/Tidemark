@@ -42,6 +42,8 @@ public class ImmutableSetOfLongTest {
 	/*
 	 * Test for collision. Collisions occur given the initial capacity and the
 	 * number of key/value pairs.
+	 * 
+	 * Re-factored.
 	 */
 	public class TestCollision extends TestAbstract {
 		public boolean _run(ImmutableSetOfLong isol,long[] includedValues,long[] excludedValues) {
