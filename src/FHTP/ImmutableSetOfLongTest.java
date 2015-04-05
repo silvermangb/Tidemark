@@ -44,28 +44,13 @@ public class ImmutableSetOfLongTest {
 	 * number of key/value pairs.
 	 */
 	public class TestCollision extends TestAbstract {
-		public boolean run() {
+		public boolean _run(ImmutableSetOfLong isol,long[] includedValues,long[] excludedValues) {
 
-			long testStartTime = System.currentTimeMillis();
+			final int N = includedValues.length;
+			
 			double delta;
 			long now;
-			long then;
-			final int N = (1<<22)+(int)((System.currentTimeMillis()%1024)-512);
-			
-			ImmutableSetOfLong isol = new ImmutableSetOfLong();
-			
-			java.util.Random rand = new java.util.Random(System.currentTimeMillis());
-			then = System.currentTimeMillis();
-			long[] includedValues = new long[N];
-			long l;
-			for(int i=0;i<N;++i) {
-				l = rand.nextLong();
-				l &= Long.MAX_VALUE;
-				includedValues[i] = l;				
-			}
-			now = System.currentTimeMillis();
-			delta = (now-then)/10000.0;
-			System.out.println(this.getClass().getName()+":time to generate data:\t"+delta);System.out.flush();
+			long then;			
 		
 			then = System.currentTimeMillis();
 			isol.add(includedValues);
@@ -86,8 +71,8 @@ public class ImmutableSetOfLongTest {
 			for (int j = 0; j < 8; j++) {
 				then = System.currentTimeMillis();
 				for (int i = 0; i < N; ++i) {
-					assert isol.contains(includedValues[i]);
-					assert !isol.contains(rand.nextLong() & Long.MAX_VALUE);
+					assert isol.contains(includedValues[i]) : "missing";
+					assert !isol.contains(excludedValues[i]) : "invalid";
 				}
 				now = System.currentTimeMillis();
 				delta = (now - then) / 1000.0;
@@ -98,6 +83,40 @@ public class ImmutableSetOfLongTest {
 			System.out.println(this.getClass().getName()+":lookupStatistics:\t"+isol.getLookupStatistics());System.out.flush();
 			System.out.println(this.getClass().getName()+":maxCollisions:\t"+isol.getMaxCollisions());System.out.flush();
 
+			return true;
+		}
+		public boolean run() {
+
+			long testStartTime = System.currentTimeMillis();
+			double delta;
+			long now;
+			long then;
+			final int N = (1<<22)+(int)((System.currentTimeMillis()%1024)-512);
+			
+			ImmutableSetOfLong isol = new ImmutableSetOfLong();
+			
+			java.util.Random rand = new java.util.Random(System.currentTimeMillis());
+			then = System.currentTimeMillis();
+			long[] includedValues = new long[N];
+			long[] excludedValues = new long[N];
+			long l;
+			for(int i=0;i<N;++i) {
+				l = rand.nextLong();
+				l &= Long.MAX_VALUE;
+				includedValues[i] = l;		
+				l = rand.nextLong();
+				l &= Long.MAX_VALUE;
+				excludedValues[i] = l;
+			}
+			includedValues[0] = 0;
+			includedValues[1] = 0;
+//			excludedValues[0] = 0;
+			now = System.currentTimeMillis();
+			delta = (now-then)/10000.0;
+			System.out.println(this.getClass().getName()+":time to generate data:\t"+delta);System.out.flush();
+		
+			this._run(isol, includedValues, excludedValues);
+			
 			long testStopTime = System.currentTimeMillis();
 			System.out.println(this.getClass().getName()+":total test time: "+((testStopTime-testStartTime)/1000.0));System.out.flush();
 			return true;
