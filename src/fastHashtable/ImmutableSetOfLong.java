@@ -1,7 +1,9 @@
 package fastHashtable;
 
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Objects of this class hold a fixed set of values and are optimized to provide one set operation,
@@ -15,83 +17,21 @@ public class ImmutableSetOfLong {
     
 	public final static int POS_BITS = 0x7fffffff;
 
-	/*
-	 * The size of the bucket array. Each int in the array is a bit array. The
-	 * bucket index and the bit number maps to a value in _values. If the bit is
-	 * 1 there is an entry in _values, otherwise, there is none.
-	 */
-	private final int _DEFAULT_BUCKET_COUNT = 2048+1;
-	private int _MAX_BUCKET_LENGTH = 6;
-	
 	private boolean isFinalized = false;
+	
+
+	private List<long[]> data = new ArrayList<>();
 	
 	/*
 	 * The number of key/value pairs in the hash table.
 	 */
 	private int _size;
-
-	private int[]    _bucketSize;
+	
+	private int      _bucketCount;
+	private int      _bucketLength;
+	private int[]    _buckets;
 	private long[][] _table;
-
-	private void _init(int bucketSize) {
-		this._bucketSize = new int[bucketSize];
-		this._table = new long[this._bucketSize.length][];
-	}
-
-	private void _rehash() {
-
-
-		ImmutableSetOfLong isol = new ImmutableSetOfLong(false);
-		isol._MAX_BUCKET_LENGTH = 2*this._MAX_BUCKET_LENGTH;
-		final int bucketCount = 2*this._table.length+1;
-		isol._table = new long[bucketCount][];
-		for(int i=0;i<bucketCount;++i) {
-			isol._table[i] = new long[isol._MAX_BUCKET_LENGTH];
-		}
-		isol._bucketSize = new int[bucketCount];
-		
-		for(int i=0;i<this._table.length;++i) {
-			if(this._bucketSize[i]>0) {
-				isol.add(this._table[i],this._bucketSize[i]);
-			}
-		}
-	
-
-		this._MAX_BUCKET_LENGTH = isol._MAX_BUCKET_LENGTH;
-		this._table 		= isol._table;
-		this._bucketSize    = isol._bucketSize;
-		this._size			= isol._size;
-
-		
-	}
-	
-	/*
-	 * default constructor.
-	 */
-	public ImmutableSetOfLong() {
-		this._init(_DEFAULT_BUCKET_COUNT);
-	}
-
-	/**
-	 * 
-	 * @param numberOfItems
-	 */
-	public ImmutableSetOfLong(int numberOfItems) {
-		int bucketCount = 
-			(int) java.lang.Math.floor((double)numberOfItems / _MAX_BUCKET_LENGTH) + 1;
-		if(bucketCount*_MAX_BUCKET_LENGTH<numberOfItems) {
-			++bucketCount;
-		}
-		this._init(bucketCount);
-	}
-	
-	/**
-	 * Construct a nil object which will have its parameters set optimally for
-	 * the number of values it will contain before the data is added.
-	 * 
-	 * @param deffer
-	 */
-	private ImmutableSetOfLong(boolean deffer) {}
+	private int       maxCollisions=0;
 
 	/*
 	 * The number of entries pairs in the hash table.
@@ -103,9 +43,9 @@ public class ImmutableSetOfLong {
 	
 	public long getMemoryUsage() {
 		
-		int n = this._bucketSize.length;
+		int n = this._bucketCount;
 		int total = Integer.SIZE*n;
-		for(int i=0;i<this._bucketSize.length;++i) {
+		for(int i=0;i<this._bucketCount;++i) {
 			n = this._table[i].length;
 			total += Long.SIZE*n;
 		}
@@ -114,59 +54,12 @@ public class ImmutableSetOfLong {
 	}
 
 	public void add(long[] larray) {
-		for(long l : larray) {
-			add(l);
+		if(this.isFinalized) {
+			throw new IllegalStateException("set is finalized");
 		}
+		this.data.add(larray);
 	}
 	
-	public void add(long[] larray,final int size) {
-		for(int i=0;i<size;++i) {
-			add(larray[i]);
-		}
-	}
-	
-	/*
-	 * entries are added, but, *never* removed.
-	 * 
-	 * negative values are not allowed.
-	 * 
-	 */
-	public void add(long l) {
-		
-		if(isFinalized) {
-			throw new IllegalStateException("no data can be added after the object is finalized");
-		}
-		
-		if(l<0) {
-			return;
-		}
-
-		int hash = hashFunction(l);
-		
-		long[] bucket = this._table[hash];
-		if(bucket==null) {
-			bucket = new long[_MAX_BUCKET_LENGTH];
-			bucket[0] = l;
-			this._bucketSize[hash] = 1;
-			this._table[hash] = bucket;
-			++this._size;
-		} else {
-			if (this._bucketSize[hash] < _MAX_BUCKET_LENGTH) {
-				if (this._table[hash] == null) {
-					this._table[hash] = new long[_MAX_BUCKET_LENGTH];
-				}
-				bucket = _table[hash];
-				bucket[this._bucketSize[hash]] = l;
-				++this._bucketSize[hash];
-				++this._size;
-				return;
-			}
-			this._rehash();
-			this.add(l);
-		}
-
-	}
-
 
 	
 	/*
@@ -179,7 +72,7 @@ public class ImmutableSetOfLong {
 		
 		++lookups;
 
-		int hash = hashFunction(l);
+		int hash = hashFunction(l,this._table.length);
 
 		if (hash >= this._table.length) {
 			return false;
@@ -191,13 +84,18 @@ public class ImmutableSetOfLong {
 			return false;
 		}
 
-		for (int i = 0; i < this._bucketSize[hash]; ++i) {
+		
+		int collisions = 0;
+		for (int i = 0; i < this._buckets[hash]; ++i) {
 			if (bucket[i] == l) {
+				lookupCollisions += collisions;
+				maxCollisions = Math.max(maxCollisions, collisions);
 				return true;
-			}
-			++lookupCollisions;
-		}
+			};
+			++collisions;
 
+		}
+        ;
 		return false;
 
 	}
@@ -206,51 +104,74 @@ public class ImmutableSetOfLong {
 		
 		this.isFinalized = true;
 		
-		ImmutableSetOfLong optimized = new ImmutableSetOfLong(true);
+		for(long[] l : this.data) {
+			this._size += l.length;
+		}
 		
-		/**
-		 * Binary search on a sorted array of the values in this set
-		 * would provide optimal memory usage and provide a worst case
-		 * lookup on the order of log2(this._size). To improve lookup 
-		 */
-		double dlog2 = (int)( Math.log(this._size)/Math.log(2));
-		int    ilog2 = (int)dlog2;
-		if(dlog2>ilog2) {
-			++ilog2;
+		double dlog2 = Math.log(this._size)/Math.log(2);
+		int ilog2 = (int)dlog2;
+		// binary search worst case
+		int binarySearchWC = ilog2;
+		if(ilog2<dlog2) {
+			++binarySearchWC;
 		}
-		optimized._MAX_BUCKET_LENGTH = Math.max(ilog2, 10);
-		final int bucketCount = Math.max((this._size+1)/optimized._MAX_BUCKET_LENGTH,optimized._MAX_BUCKET_LENGTH);
-		optimized._table = new long[bucketCount][];
-		for(int i=0;i<bucketCount;++i) {
-			optimized._table[i] = new long[optimized._MAX_BUCKET_LENGTH];
-		}
-		optimized._bucketSize = new int[bucketCount];
-		for(int i=0;i<this._table.length;++i) {
-			if(this._table[i]!=null) {
-					optimized.add(this._table[i],this._bucketSize[i]);
+		int maxCollsionsGoal = binarySearchWC/4;
+		int hashValue;
+		int M=0;
+		for(int i=0;i<3;++i) {
+			maxCollisions = 0;
+			M = (1<<(i+1))*this._size + 1;
+			for(int j=0;j<this.data.size();++j) {
+				long[] l = this.data.get(j);
+				int[]  h = new int[M];
+				for(int k=0;k<l.length;++k) {
+					hashValue = this.hashFunction(l[k], M);
+					++h[hashValue];
+					maxCollisions = Math.max(maxCollisions, h[hashValue]);
+				}
+			}
+			if(maxCollisions<=maxCollsionsGoal) {
+				break;
 			}
 		}
 		
-		for(int i=0;i<optimized._table.length;++i) {
-			if (optimized._table[i]!=null) {
-				long[] trimmedBucket = Arrays.copyOf(optimized._table[i],
-						optimized._bucketSize[i]);
-				optimized._table[i] = trimmedBucket;
+		//...
+		//...insert the data
+		//...
+		
+		this._bucketCount = M;
+		this._buckets = new int[this._bucketCount];
+		this._bucketLength = maxCollisions;
+		this._table = new long[M][];
+		for(int i=0;i<M;++i) {
+			this._table[i] = new long[maxCollisions];
+		}
+		for(int j=0;j<this.data.size();++j) {
+			long[] larray = this.data.get(j);
+			for(long l : larray) {
+				hashValue = hashFunction(l,M);
+				long[] bucket = this._table[hashValue];
+				bucket[this._buckets[hashValue]++] = l;
 			}
 		}
 		
-		this._bucketSize = optimized._bucketSize;
-		this._table = optimized._table;
+		maxCollisions = 0;
+		//...
+		//...optimize the memory usage
+		//...
+		for(int j=0;j<this._bucketCount;++j) {
+			this._table[j] = Arrays.copyOf(this._table[j], this._buckets[j]);
+		}
+		
+	
 	}
 
 
-	private int hashFunction(long l) {
+	private int hashFunction(long l, int N) {
 		
-        int c = this._table.length;
-        int e = this._bucketSize.length;
         int a = 3 * (((int) l) ^ (int) (l >>> 32));
         int b = a & POS_BITS;
-        int d = b % c;
+        int d = b % N;
         
         return d;
 		
@@ -260,6 +181,11 @@ public class ImmutableSetOfLong {
 	private long lookupCollisions = 0;
 	
 	public double getLookupStatistics() {
+		System.out.println("get lookup statistics: "+lookups+" "+lookupCollisions);
 		return (double)lookupCollisions/lookups;
+	}
+	
+	public long getMaxCollisions() {
+		return maxCollisions;
 	}
 }

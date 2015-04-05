@@ -20,39 +20,9 @@ public class ImmutableSetOfLongTest {
 		public abstract boolean run();
 	}
 
-	/*
-	 * Test add & contains
-	 */
-	public class TestPut extends TestAbstract {
-		public boolean run() {
-			ImmutableSetOfLong isol = new ImmutableSetOfLong();
-			long l = (long)Integer.MAX_VALUE + 1;
-			isol.add(l);
-			isol.finalize();
-			return isol.contains(l);
-		}
-	}
-
-	/*
-	 * Test growing the table.
-	 */
-	public class TestGrow extends TestAbstract {
-		public boolean run() {
-			ImmutableSetOfLong isol = new ImmutableSetOfLong();
-			
-			long k = (long)Integer.MAX_VALUE+1;
-			isol.add(k);
-			isol.add(k+1);
-			
-			isol.finalize();
-			
-			assert isol.contains(k);
-			assert isol.contains(k+1);
 
 
-			return true;
-		}
-	}
+	
 
 	/*
 	 * Test add & contains
@@ -61,7 +31,6 @@ public class ImmutableSetOfLongTest {
 		public boolean run() {
 			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 
-			isol.add(-1);
 			isol.finalize();
 			assert !isol.contains(-1);
 
@@ -77,6 +46,7 @@ public class ImmutableSetOfLongTest {
 	public class TestCollision extends TestAbstract {
 		public boolean run() {
 
+			long testStartTime = System.currentTimeMillis();
 			double delta;
 			long now;
 			long then;
@@ -85,40 +55,52 @@ public class ImmutableSetOfLongTest {
 			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 			
 			java.util.Random rand = new java.util.Random(System.currentTimeMillis());
-
+			then = System.currentTimeMillis();
 			long[] includedValues = new long[N];
 			long l;
-			for(int i=1;i<N;++i) {
+			for(int i=0;i<N;++i) {
 				l = rand.nextLong();
 				l &= Long.MAX_VALUE;
 				assert l>=0;
 				includedValues[i] = l;				
 			}
-			
+			now = System.currentTimeMillis();
+			delta = (now-then)/10000.0;
+			System.out.println(this.getClass().getName()+":time to generate data:\t"+delta);System.out.flush();
+		
 			then = System.currentTimeMillis();
 			isol.add(includedValues);
 			now = System.currentTimeMillis();
 			delta = (now-then)/10000.0;
-			System.out.println(delta);
+			System.out.println(this.getClass().getName()+":time to add data to set:\t"+delta);System.out.flush();
 			
-
+			then = System.currentTimeMillis();
 			isol.finalize();
+			now = System.currentTimeMillis();
+			delta = (now-then)/10000.0;
+			System.out.println(this.getClass().getName()+":time to finalize:\t"+delta);System.out.flush();
 			long n = isol.getMemoryUsage();
 			long d = Long.SIZE*N;
-			System.out.println(this.getClass().getName()+": "+n+" "+d+" "+((double)n/d));
-			then = System.currentTimeMillis();
-			for (int i = 1; i < N; ++i) {
-
-				
-				assert isol.contains(includedValues[i]);
-				assert !isol.contains(rand.nextLong()&Long.MAX_VALUE);
+			System.out.println(this.getClass().getName()+":memory usage:\t"+n+" "+d+" "+((double)n/d));System.out.flush();
+			
+			
+			for (int j = 0; j < 8; j++) {
+				then = System.currentTimeMillis();
+				for (int i = 0; i < N; ++i) {
+					assert isol.contains(includedValues[i]);
+					assert !isol.contains(rand.nextLong() & Long.MAX_VALUE);
+				}
+				now = System.currentTimeMillis();
+				delta = (now - then) / 1000.0;
+				System.out.println(this.getClass().getName()
+						+ ":time to test lookups:\t" + delta);
+				System.out.flush();
 			}
-			now = System.currentTimeMillis();
-			delta = (now-then)/1000.0;
-			System.out.println(delta);
+			System.out.println(this.getClass().getName()+":lookupStatistics:\t"+isol.getLookupStatistics());System.out.flush();
+			System.out.println(this.getClass().getName()+":maxCollisions:\t"+isol.getMaxCollisions());System.out.flush();
 
-			System.out.println("lookupStatistics: "+isol.getLookupStatistics());
-
+			long testStopTime = System.currentTimeMillis();
+			System.out.println(this.getClass().getName()+":total test time: "+((testStopTime-testStartTime)/1000.0));System.out.flush();
 			return true;
 		}
 	}
@@ -129,17 +111,22 @@ public class ImmutableSetOfLongTest {
 	public class TestForMissingKey extends TestAbstract {
 		public boolean run() {
 			
+			final int N = 16;
 			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 
-			isol = new ImmutableSetOfLong(1 << 16);
-			for (long i = 0; i < (1 << 16); i += 2) {
-				isol.add(i);
+			isol = new ImmutableSetOfLong();
+			long[] l = new long[N];
+			long   v = 0;
+			for (int i = 0; i < N; ++i) {
+				l[i] = v;
+				v += 2;
 			}
+			isol.add(l);
 			isol.finalize();
-			for (long i = 1; i < (1 << 16); i += 2) {
+			for (long i = 1; i < N; i += 2) {
 				assert !isol.contains(i);
 			}
-			for (long i = 0; i < (1 << 16); i += 2) {
+			for (long i = 0; i < N; i += 2) {
 				assert isol.contains(i);
 			}
 
@@ -154,8 +141,6 @@ public class ImmutableSetOfLongTest {
 
 		ArrayList<TestAbstract> tests = new ArrayList<TestAbstract>();
 
-		tests.add(new TestGrow());
-		tests.add(new TestPut());
 		tests.add(new TestCollision());
 		tests.add(new TestForMissingKey());
 		tests.add(new TestInvalidKey());
