@@ -61,7 +61,6 @@ public class ImmutableSetOfLongTest {
 			for(int i=0;i<N;++i) {
 				l = rand.nextLong();
 				l &= Long.MAX_VALUE;
-				assert l>=0;
 				includedValues[i] = l;				
 			}
 			now = System.currentTimeMillis();
