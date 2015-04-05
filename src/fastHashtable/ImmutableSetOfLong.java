@@ -44,12 +44,10 @@ public class ImmutableSetOfLong {
 	
 	public long getMemoryUsage() {
 		
-		int n = this._bucketCount;
-		int total = Integer.SIZE*n;
+		long total = (long)Integer.SIZE*this._bucketCount;
 		for(int i=0;i<this._bucketCount;++i) {
 			if (this._table[i]!=null) {
-				n = this._table[i].length;
-				total += Long.SIZE * n;
+				total += (long)Long.SIZE * this._table[i].length;
 			}
 		}
 		return total;
@@ -73,6 +71,8 @@ public class ImmutableSetOfLong {
 			throw new IllegalStateException("the object has not been finalized");
 		}
 		
+		++lookups;
+		
 		int hash = hashFunction(l,this._bucketCount);
 
 		long[] bucket = this._table[hash];
@@ -81,11 +81,15 @@ public class ImmutableSetOfLong {
 			return false;
 		}
 
-		
+		int collisions = 0;
 		for (int i = 0; i < this._buckets[hash]; ++i) {
+			
 			if (bucket[i] == l) {
+				maxCollisions = Math.max(maxCollisions, collisions);
+				this.lookupCollisions+=collisions;
 				return true;
 			};
+			++collisions;
 		};
 		return false;
 
@@ -106,26 +110,28 @@ public class ImmutableSetOfLong {
 		if(ilog2<dlog2) {
 			++binarySearchWC;
 		}
-		int maxCollsionsGoal = binarySearchWC/this.binarySearchTarget;
+		int maxCollisionsGoal = binarySearchWC/this.binarySearchTarget;
 		int hashValue;
-		int[] h = new int[(1<<(this.growthFactor))*this._size+1];
-		int M=0;
-		for(int i=0;i<this.growthFactor;++i) {
-			maxCollisions = 0;
-			M = (1<<(i+1))*this._size + 1;
+		maxCollisions = maxCollisionsGoal+1;
+		int[] h = null;
+		int M = this._size;
+		do{
+			M = HashUtil.nextPrime(3*M/2);
+			int collisions = 0;
+			h = new int[M];
 			for(int j=0;j<this.data.size();++j) {
 				long[] l = this.data.get(j);
-				Arrays.fill(h, 0,M,0);
 				for(int k=0;k<l.length;++k) {
 					hashValue = this.hashFunction(l[k], M);
 					++h[hashValue];
-					maxCollisions = Math.max(maxCollisions, h[hashValue]);
+					collisions = Math.max(collisions, h[hashValue]-1);
 				}
 			}
-			if(maxCollisions<=maxCollsionsGoal) {
-				break;
-			}
-		}
+			maxCollisions = collisions;
+			
+		} while(maxCollisions>maxCollisionsGoal && maxCollisions>0 && this._size>0 && (M/this._size)<5);
+
+		System.out.println("maxCollisions="+maxCollisions);
 				
 		//...
 		//...insert the data
@@ -133,13 +139,13 @@ public class ImmutableSetOfLong {
 		
 		this._bucketCount = M;
 		this._buckets = new int[this._bucketCount];
-		this._table = new long[M][];
+		this._table = new long[this._bucketCount][];
 
 		boolean present = false;
 		for(int j=0;j<this.data.size();++j) {
 			long[] larray = this.data.get(j);
 			for(long l : larray) {
-				hashValue = hashFunction(l,M);
+				hashValue = hashFunction(l,this._bucketCount);
 				if(h[hashValue]>0) {
 					this._table[hashValue] = new long[h[hashValue]];
 					h[hashValue] = 0;
@@ -153,7 +159,12 @@ public class ImmutableSetOfLong {
 					}
 				}
 				if (!present) {
-					bucket[this._buckets[hashValue]++] = l;
+					try {
+						bucket[this._buckets[hashValue]++] = l;
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -180,7 +191,7 @@ public class ImmutableSetOfLong {
 	private long lookupCollisions = 0;
 	
 	public double getLookupStatistics() {
-		System.out.println("get lookup statistics: "+lookups+" "+lookupCollisions);
+		System.out.println("get lookup statistics: "+lookups+" "+lookupCollisions+" "+maxCollisions);
 		return (double)lookupCollisions/lookups;
 	}
 	

@@ -33,7 +33,12 @@ public class ImmutableSetOfLongTest {
 
 			isol.finalizeSet();
 			assert !isol.contains(-1);
-
+			
+			isol = new ImmutableSetOfLong();
+			isol.add(new long[]{0});
+			isol.finalizeSet();
+			
+			assert !isol.contains(1);
 			return true;
 		}
 	}
@@ -67,7 +72,7 @@ public class ImmutableSetOfLongTest {
 			System.out.println(this.getClass().getName()+":time to finalize:\t"+delta);System.out.flush();
 			long n = isol.getMemoryUsage();
 			long d = Long.SIZE*N;
-			System.out.println(this.getClass().getName()+":memory usage:\t"+n+" "+d+" "+((double)n/d));System.out.flush();
+			System.out.println(this.getClass().getName()+":memory usage:\t"+n+" "+d+" "+(n/d));System.out.flush();
 			
 			
 			for (int j = 0; j < 8; j++) {
