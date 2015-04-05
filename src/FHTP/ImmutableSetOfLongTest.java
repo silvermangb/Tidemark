@@ -31,7 +31,7 @@ public class ImmutableSetOfLongTest {
 		public boolean run() {
 			ImmutableSetOfLong isol = new ImmutableSetOfLong();
 
-			isol.finalize();
+			isol.finalizeSet();
 			assert !isol.contains(-1);
 
 			return true;
@@ -75,7 +75,7 @@ public class ImmutableSetOfLongTest {
 			System.out.println(this.getClass().getName()+":time to add data to set:\t"+delta);System.out.flush();
 			
 			then = System.currentTimeMillis();
-			isol.finalize();
+			isol.finalizeSet();
 			now = System.currentTimeMillis();
 			delta = (now-then)/10000.0;
 			System.out.println(this.getClass().getName()+":time to finalize:\t"+delta);System.out.flush();
@@ -122,7 +122,7 @@ public class ImmutableSetOfLongTest {
 				v += 2;
 			}
 			isol.add(l);
-			isol.finalize();
+			isol.finalizeSet();
 			for (long i = 1; i < N; i += 2) {
 				assert !isol.contains(i);
 			}

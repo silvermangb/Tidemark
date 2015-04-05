@@ -28,7 +28,6 @@ public class ImmutableSetOfLong {
 	private int _size;
 	
 	private int      _bucketCount;
-	private int      _bucketLength;
 	private int[]    _buckets;
 	private long[][] _table;
 	private int       maxCollisions=0;
@@ -74,9 +73,9 @@ public class ImmutableSetOfLong {
 		
 		++lookups;
 
-		int hash = hashFunction(l,this._table.length);
+		int hash = hashFunction(l,this._bucketCount);
 
-		if (hash >= this._table.length) {
+		if (hash >= this._bucketCount) {
 			return false;
 		}
 
@@ -102,7 +101,7 @@ public class ImmutableSetOfLong {
 
 	}
 	
-	public void finalize() {
+	public void finalizeSet() {
 		
 		this.isFinalized = true;
 		
@@ -143,7 +142,6 @@ public class ImmutableSetOfLong {
 		
 		this._bucketCount = M;
 		this._buckets = new int[this._bucketCount];
-		this._bucketLength = maxCollisions;
 		this._table = new long[M][];
 
 		for(int j=0;j<this.data.size();++j) {
