@@ -75,10 +75,6 @@ public class ImmutableSetOfLong {
 
 		int hash = hashFunction(l,this._bucketCount);
 
-		if (hash >= this._bucketCount) {
-			return false;
-		}
-
 		long[] bucket = this._table[hash];
 
 		if (bucket == null) {
@@ -118,13 +114,15 @@ public class ImmutableSetOfLong {
 		}
 		int maxCollsionsGoal = binarySearchWC/4;
 		int hashValue;
+		final int L=3;
+		int[] h = new int[(1<<(L))*this._size+1];
 		int M=0;
-		for(int i=0;i<3;++i) {
+		for(int i=0;i<L;++i) {
 			maxCollisions = 0;
 			M = (1<<(i+1))*this._size + 1;
 			for(int j=0;j<this.data.size();++j) {
 				long[] l = this.data.get(j);
-				int[]  h = new int[M];
+				Arrays.fill(h, 0,M,0);
 				for(int k=0;k<l.length;++k) {
 					hashValue = this.hashFunction(l[k], M);
 					++h[hashValue];
@@ -135,7 +133,7 @@ public class ImmutableSetOfLong {
 				break;
 			}
 		}
-		
+				
 		//...
 		//...insert the data
 		//...
@@ -148,24 +146,19 @@ public class ImmutableSetOfLong {
 			long[] larray = this.data.get(j);
 			for(long l : larray) {
 				hashValue = hashFunction(l,M);
-				if(this._table[hashValue]==null) {
-					this._table[hashValue] = new long[maxCollisions];
+				if(h[hashValue]>0) {
+					this._table[hashValue] = new long[h[hashValue]];
+					h[hashValue] = 0;
 				}
 				long[] bucket = this._table[hashValue];
 				bucket[this._buckets[hashValue]++] = l;
 			}
 		}
 		
-		maxCollisions = 0;
-		//...
-		//...optimize the memory usage
-		//...
-		for(int j=0;j<this._bucketCount;++j) {
-			if(this._table[j]!=null) {
-				this._table[j] = Arrays.copyOf(this._table[j], this._buckets[j]);
-			}
-		}
+		this.data.clear();
+		this.data = null;
 		
+		maxCollisions = 0;
 	
 	}
 
