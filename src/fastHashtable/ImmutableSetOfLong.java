@@ -46,8 +46,10 @@ public class ImmutableSetOfLong {
 		int n = this._bucketCount;
 		int total = Integer.SIZE*n;
 		for(int i=0;i<this._bucketCount;++i) {
-			n = this._table[i].length;
-			total += Long.SIZE*n;
+			if (this._table[i]!=null) {
+				n = this._table[i].length;
+				total += Long.SIZE * n;
+			}
 		}
 		return total;
 		
@@ -143,13 +145,14 @@ public class ImmutableSetOfLong {
 		this._buckets = new int[this._bucketCount];
 		this._bucketLength = maxCollisions;
 		this._table = new long[M][];
-		for(int i=0;i<M;++i) {
-			this._table[i] = new long[maxCollisions];
-		}
+
 		for(int j=0;j<this.data.size();++j) {
 			long[] larray = this.data.get(j);
 			for(long l : larray) {
 				hashValue = hashFunction(l,M);
+				if(this._table[hashValue]==null) {
+					this._table[hashValue] = new long[maxCollisions];
+				}
 				long[] bucket = this._table[hashValue];
 				bucket[this._buckets[hashValue]++] = l;
 			}
@@ -160,7 +163,9 @@ public class ImmutableSetOfLong {
 		//...optimize the memory usage
 		//...
 		for(int j=0;j<this._bucketCount;++j) {
-			this._table[j] = Arrays.copyOf(this._table[j], this._buckets[j]);
+			if(this._table[j]!=null) {
+				this._table[j] = Arrays.copyOf(this._table[j], this._buckets[j]);
+			}
 		}
 		
 	
